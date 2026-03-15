@@ -4,6 +4,7 @@ import setting
 
 import babase
 import bascenev1 as bs
+from tools import logger
 
 settings = setting.get_settings_data()
 INGAME_TIME = settings["afk_remover"]["ingame_idle_time_in_secs"]
@@ -17,6 +18,7 @@ class checkIdle(object):
     def start(self):
         self.t1 = babase.AppTimer(2, babase.CallStrict(self.check), repeat=True)
         self.lobbies = {}
+        self._logged_missing_input_api = False
 
     def check(self):
         global cLastIdle
@@ -25,7 +27,19 @@ class checkIdle(object):
         if not bs.get_foreground_host_session():
             return
         for player in bs.get_foreground_host_session().sessionplayers:
-            last_input = int(player.inputdevice.get_last_input_time())
+            input_device = player.inputdevice
+            if hasattr(input_device, "get_last_input_time"):
+                last_input = int(input_device.get_last_input_time())
+            else:
+                # API 9+ no longer exposes get_last_input_time() on
+                # InputDevice in this environment; skip in-game AFK checks.
+                if not self._logged_missing_input_api:
+                    logger.log(
+                        "afk_check: InputDevice.get_last_input_time() unavailable; in-game AFK check disabled",
+                        "sys",
+                    )
+                    self._logged_missing_input_api = True
+                continue
             afk_time = int((current - last_input) / 1000)
             if afk_time in range(INGAME_TIME,
                                  INGAME_TIME + 20) or afk_time > INGAME_TIME + 20:
@@ -38,7 +52,12 @@ class checkIdle(object):
                 cLastIdle = current
 
             if afk_time in range(INGAME_TIME, INGAME_TIME + 20):
-                self.warn_player(player.get_v1_account_id(),
+                player_id = (
+                    player.get_account_id()
+                    if hasattr(player, "get_account_id")
+                    else player.get_v1_account_id()
+                )
+                self.warn_player(player_id,
                                  "Press any button within " + str(
                                      INGAME_TIME + 20 - afk_time) + " secs")
             if afk_time > INGAME_TIME + 20:
