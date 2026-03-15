@@ -1,8 +1,9 @@
 services:
   bombsquad:
     container_name: bombsquad_server
-    build: .
     image: bombsquad_ballistica_server
+    build: .
+    pull_policy: never
     ports:
       - "43210:43210/udp"
     volumes:
