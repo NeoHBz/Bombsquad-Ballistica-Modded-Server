@@ -19,8 +19,15 @@ class AccountUtil:
         self._proxyid: str | None = None
         self._proxykey: str | None = None
         plus = bui.app.plus
+        if plus is None:
+            logging.error("Plus API unavailable; cannot start V2 login flow")
+            return
         plus.sign_out_v1()
-        babase.app.cloud.send_message_cb(
+        if not hasattr(plus, 'cloud'):
+            logging.error("Cloud API unavailable; falling back to V1 account")
+            plus.sign_in_v1('Local')
+            return
+        plus.cloud.send_message_cb(
             bacommon.cloud.LoginProxyRequestMessage(),
             on_response=babase.Call(self._on_proxy_request_response))
 
@@ -43,7 +50,11 @@ class AccountUtil:
     def _ask_for_status(self) -> None:
         assert self._proxyid is not None
         assert self._proxykey is not None
-        babase.app.cloud.send_message_cb(
+        plus = bui.app.plus
+        if plus is None or not hasattr(plus, 'cloud'):
+            logging.error("Cloud API unavailable during V2 status check")
+            return
+        plus.cloud.send_message_cb(
             bacommon.cloud.LoginProxyStateQueryMessage(
                 proxyid=self._proxyid, proxykey=self._proxykey),
             on_response=babase.Call(self._got_status))
