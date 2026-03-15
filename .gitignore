@@ -11,3 +11,4 @@ dist/ba_root/mods/serverdata/*.json
 dist/ba_root/mods/stats/*.json
 
 .DS_Store
+BombSquad_Server_Linux_Arm64_1.7.61/

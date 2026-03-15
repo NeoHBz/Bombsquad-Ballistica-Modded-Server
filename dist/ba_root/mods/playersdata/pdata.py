@@ -204,17 +204,19 @@ def add_profile(
     serverdata.clients[account_id]["rejoincount"] = 1
     serverdata.clients[account_id]["lastJoin"] = time.time()
     cid = 113
+    roster_entry = None
     for ros in bs.get_game_roster():
         if ros['account_id'] == account_id:
             cid = ros['client_id']
-    ip = _bascenev1.get_client_ip(cid)
+            roster_entry = ros
+    ip = roster_entry.get('address', '') if roster_entry is not None else ''
     serverdata.clients[account_id]["lastIP"] = ip
     serverdata.recents.append(
         {"client_id": cid, "deviceId": display_string, "pbid": account_id})
     serverdata.recents = serverdata.recents[-20:]
     device_id = _bascenev1.get_client_public_device_uuid(cid)
-    if (device_id == None):
-        device_id = _bascenev1.get_client_device_uuid(cid)
+    if device_id is None:
+        device_id = f"client-{cid}"
     checkSpammer({'id': account_id, 'display': display_string,
                   'ip': ip, 'device': device_id})
     if device_id in get_blacklist()["ban"]["deviceids"] or account_id in \
