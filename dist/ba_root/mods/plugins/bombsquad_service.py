@@ -113,12 +113,17 @@ class BsDataThread(object):
                                       'players': []
                                       }
                 for player in team.players:
+                    account_id = (
+                        player.get_account_id()
+                        if hasattr(player, "get_account_id")
+                        else player.get_v1_account_id()
+                    )
                     teamplayer = {'name': player.getname(),
                                   'device_id': player.inputdevice.get_v1_account_name(
                                       True),
                                   'inGame': player.in_game,
                                   'character': player.character,
-                                  'account_id': player.get_v1_account_id()
+                                  'account_id': account_id
                                   }
                     data[str(team.id)]['players'].append(teamplayer)
 

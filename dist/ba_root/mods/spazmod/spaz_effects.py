@@ -1,5 +1,6 @@
 import functools
 import random
+import asyncio
 
 import setting
 from playersdata import pdata
@@ -34,8 +35,11 @@ def effect(repeat_interval=0):
                     else:
                         raise
 
-            effect_activation = bs.Timer(repeat_interval, babase.Call(_caller),
-                                         repeat=repeat_interval > 0)
+            effect_activation = bs.Timer(
+                repeat_interval,
+                babase.CallStrict(_caller),
+                repeat=repeat_interval > 0,
+            )
             self._activations.append(effect_activation)
 
         return _inner_activator
@@ -54,8 +58,11 @@ def node(check_interval=0):
                     node.delete()
                     self._activations = []
 
-            node_activation = bs.Timer(check_interval, babase.Call(_caller),
-                                       repeat=check_interval > 0)
+            node_activation = bs.Timer(
+                check_interval,
+                babase.CallStrict(_caller),
+                repeat=check_interval > 0,
+            )
             try:
                 self._activations.append(node_activation)
             except AttributeError:
@@ -86,11 +93,24 @@ class NewPlayerSpaz(PlayerSpaz):
         self._activations = []
         self.effects = []
 
-        babase._asyncio._asyncio_event_loop.create_task(self.set_effects())
+        loop = getattr(babase._asyncio, "_g_asyncio_event_loop", None)
+        if loop is None:
+            loop = getattr(babase._asyncio, "_asyncio_event_loop", None)
+        if loop is None:
+            try:
+                loop = asyncio.get_event_loop()
+            except Exception:
+                loop = None
+        if loop is not None:
+            loop.create_task(self.set_effects())
 
     async def set_effects(self):
         try:
-            account_id = self._player._sessionplayer.get_v1_account_id()
+            account_id = (
+                self._player._sessionplayer.get_account_id()
+                if hasattr(self._player._sessionplayer, "get_account_id")
+                else self._player._sessionplayer.get_v1_account_id()
+            )
         except:
             return
         custom_effects = pdata.get_custom()['customeffects']
