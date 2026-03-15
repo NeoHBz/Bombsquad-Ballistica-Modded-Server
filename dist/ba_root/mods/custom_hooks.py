@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING
 
 import babase
 import bascenev1 as bs
+import bascenev1._hooks as bs_hooks
 import _bascenev1
 from baclassic._appmode import ClassicAppMode
 import bauiv1 as bui
@@ -54,6 +55,12 @@ settings = setting.get_settings_data()
 def filter_chat_message(msg: str, client_id: int) -> str | None:
     """Returns all in game messages or None (ignore's message)."""
     return handlechat.filter_chat_message(msg, client_id)
+
+
+# API 9 chat filtering uses bascenev1._hooks.filter_chat_message.
+# Without this assignment, slash-commands are never routed to our handler.
+bs_hooks.filter_chat_message = filter_chat_message
+logging.warning("Custom chat filter hook enabled.")
 
 
 # ba_meta export babase.Plugin

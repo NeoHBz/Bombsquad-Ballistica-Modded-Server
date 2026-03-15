@@ -19,6 +19,7 @@ def filter_chat_message(msg, client_id):
     now = datetime.now()
     # bypassing chat filter for host
     if client_id == -1:
+        print(f"[CHAT][host] {msg}", flush=True)
         if msg.startswith("/"):
             command_executor.execute(msg, client_id)
             return None
@@ -45,6 +46,10 @@ def filter_chat_message(msg, client_id):
 
     if msg == None:
         return
+    print(
+        f"[CHAT][client={client_id}][acid={acid}][name={currentname}] {msg}",
+        flush=True,
+    )
     logger.log(f'{acid}  |  {displaystring}| {currentname} | {msg}', "chat")
     if msg.startswith("/"):
         msg = command_executor.execute(msg, client_id)
