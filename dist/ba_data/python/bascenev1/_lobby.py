@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Implements lobby system for gathering before games, char select, etc."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -118,7 +119,7 @@ class JoinInfo:
             )
 
         self._timer = _bascenev1.Timer(
-            4.0, babase.WeakCall(self._update), repeat=True
+            4.0, babase.WeakCallStrict(self._update), repeat=True
         )
 
     def _update_for_keyboard(self, keyboard: bascenev1.InputDevice) -> None:
@@ -338,10 +339,10 @@ class Chooser:
         if inputdevice.is_controller_app and '_random' in profilenames:
             return profilenames.index('_random')
 
-        # If its a client connection, for now just force
-        # the account profile if possible.. (need to provide a
-        # way for clients to specify/remember their default
-        # profile on remote servers that do not already know them).
+        # If its a client connection, for now just force the account
+        # profile if possible. (need to provide a way for clients to
+        # specify/remember their default profile on remote servers that
+        # do not already know them).
         if inputdevice.is_remote_client and '__account__' in profilenames:
             return profilenames.index('__account__')
 
@@ -609,25 +610,29 @@ class Chooser:
         if not ready:
             self._sessionplayer.assigninput(
                 babase.InputType.LEFT_PRESS,
-                babase.Call(self.handlemessage, ChangeMessage('team', -1)),
+                babase.CallStrict(
+                    self.handlemessage, ChangeMessage('team', -1)
+                ),
             )
             self._sessionplayer.assigninput(
                 babase.InputType.RIGHT_PRESS,
-                babase.Call(self.handlemessage, ChangeMessage('team', 1)),
+                babase.CallStrict(self.handlemessage, ChangeMessage('team', 1)),
             )
             self._sessionplayer.assigninput(
                 babase.InputType.BOMB_PRESS,
-                babase.Call(self.handlemessage, ChangeMessage('character', 1)),
+                babase.CallStrict(
+                    self.handlemessage, ChangeMessage('character', 1)
+                ),
             )
             self._sessionplayer.assigninput(
                 babase.InputType.UP_PRESS,
-                babase.Call(
+                babase.CallStrict(
                     self.handlemessage, ChangeMessage('profileindex', -1)
                 ),
             )
             self._sessionplayer.assigninput(
                 babase.InputType.DOWN_PRESS,
-                babase.Call(
+                babase.CallStrict(
                     self.handlemessage, ChangeMessage('profileindex', 1)
                 ),
             )
@@ -637,7 +642,9 @@ class Chooser:
                     babase.InputType.PICK_UP_PRESS,
                     babase.InputType.PUNCH_PRESS,
                 ),
-                babase.Call(self.handlemessage, ChangeMessage('ready', 1)),
+                babase.CallStrict(
+                    self.handlemessage, ChangeMessage('ready', 1)
+                ),
             )
             self._ready = False
             self._update_text()
@@ -662,7 +669,9 @@ class Chooser:
                     babase.InputType.PICK_UP_PRESS,
                     babase.InputType.PUNCH_PRESS,
                 ),
-                babase.Call(self.handlemessage, ChangeMessage('ready', 0)),
+                babase.CallStrict(
+                    self.handlemessage, ChangeMessage('ready', 0)
+                ),
             )
 
             # Store the last profile picked by this input for reuse.

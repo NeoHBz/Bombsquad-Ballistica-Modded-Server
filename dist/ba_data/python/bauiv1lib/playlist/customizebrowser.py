@@ -16,8 +16,6 @@ if TYPE_CHECKING:
 
     import bascenev1 as bs
 
-REQUIRE_PRO = False
-
 
 class PlaylistCustomizeBrowserWindow(bui.MainWindow):
     """Window for viewing a playlist."""
@@ -29,8 +27,6 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         select_playlist: str | None = None,
     ):
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from bauiv1lib import playlist
 
@@ -275,7 +271,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         # Keep our lock images up to date/etc.
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
         self._update()
 
@@ -310,12 +306,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             cfg.commit()
 
     def _update(self) -> None:
-        assert bui.app.classic is not None
-        have = bui.app.classic.accounts.have_pro_options()
         for lock in self._lock_images:
-            bui.imagewidget(
-                edit=lock, opacity=0.0 if (have or not REQUIRE_PRO) else 1.0
-            )
+            bui.imagewidget(edit=lock, opacity=0.0)  # No more pro req.
 
     def _select(self, name: str, index: int) -> None:
         self._selected_playlist_name = name
@@ -365,8 +357,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                     else (0.85, 0.85, 0.85, 1)
                 ),
                 always_highlight=True,
-                on_select_call=bui.Call(self._select, pname, index),
-                on_activate_call=bui.Call(self._edit_button.activate),
+                on_select_call=bui.CallStrict(self._select, pname, index),
+                on_activate_call=bui.CallStrict(self._edit_button.activate),
                 selectable=True,
             )
             # We don't give these widgets ids because we handle
@@ -437,15 +429,9 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
     def _new_playlist(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist.editcontroller import PlaylistEditController
-        from bauiv1lib.purchase import PurchaseWindow
 
         # No-op if we're not in control.
         if not self.main_window_has_control():
-            return
-
-        assert bui.app.classic is not None
-        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro_options():
-            PurchaseWindow(items=['pro'])
             return
 
         # Clamp at our max playlist number.
@@ -471,12 +457,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
     def _edit_playlist(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist.editcontroller import PlaylistEditController
-        from bauiv1lib.purchase import PurchaseWindow
 
-        assert bui.app.classic is not None
-        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro_options():
-            PurchaseWindow(items=['pro'])
-            return
         if self._selected_playlist_name is None:
             return
         if self._selected_playlist_name == '__default__':
@@ -530,7 +511,9 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         share.SharePlaylistImportWindow(
             origin_widget=self._import_button,
-            on_success_callback=bui.WeakCall(self._on_playlist_import_success),
+            on_success_callback=bui.WeakCallStrict(
+                self._on_playlist_import_success
+            ),
         )
 
     def _on_playlist_import_success(self) -> None:
@@ -550,16 +533,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         share.SharePlaylistResultsWindow(name, response)
 
     def _share_playlist(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.purchase import PurchaseWindow
-
         plus = bui.app.plus
         assert plus is not None
-
-        assert bui.app.classic is not None
-        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro_options():
-            PurchaseWindow(items=['pro'])
-            return
 
         # Gotta be signed in for this to work.
         if plus.get_v1_account_state() != 'signed_in':
@@ -586,7 +561,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                 'playlistType': self._pvars.config_name,
                 'playlistName': self._selected_playlist_name,
             },
-            callback=bui.WeakCall(
+            callback=bui.WeakCallPartial(
                 self._on_share_playlist_response, self._selected_playlist_name
             ),
         )
@@ -594,14 +569,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         bui.screenmessage(bui.Lstr(resource='sharingText'))
 
     def _delete_playlist(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.purchase import PurchaseWindow
         from bauiv1lib.confirm import ConfirmWindow
-
-        assert bui.app.classic is not None
-        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro_options():
-            PurchaseWindow(items=['pro'])
-            return
 
         if self._selected_playlist_name is None:
             return
@@ -631,17 +599,9 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         )
 
     def _duplicate_playlist(self) -> None:
-        # pylint: disable=too-many-branches
-        # pylint: disable=cyclic-import
-        from bauiv1lib.purchase import PurchaseWindow
-
         plus = bui.app.plus
         assert plus is not None
 
-        assert bui.app.classic is not None
-        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro_options():
-            PurchaseWindow(items=['pro'])
-            return
         if self._selected_playlist_name is None:
             return
         plst: list[dict[str, Any]] | None

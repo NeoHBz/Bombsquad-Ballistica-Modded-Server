@@ -126,7 +126,6 @@ class OnScreenKeyboardWindow(Window):
         self._load_keyboard()
 
     def _load_keyboard(self) -> None:
-        # pylint: disable=too-many-locals
         self._keyboard = self._get_keyboard()
         # We want to get just chars without column data, etc.
         self._chars = [j for i in self._keyboard.chars for j in i]
@@ -245,7 +244,9 @@ class OnScreenKeyboardWindow(Window):
                         textcolor=key_textcolor,
                         color=key_color_dark,
                         label=babase.Lstr(resource='spaceKeyText'),
-                        on_activate_call=babase.Call(self._type_char, ' '),
+                        on_activate_call=babase.CallStrict(
+                            self._type_char, ' '
+                        ),
                     )
 
                     # Show change instructions only if we have more than one
@@ -359,7 +360,7 @@ class OnScreenKeyboardWindow(Window):
             _bauiv1.buttonwidget(
                 edit=btn,
                 label=chars[i] if have_char else ' ',
-                on_activate_call=babase.Call(
+                on_activate_call=babase.CallStrict(
                     self._type_char, chars[i] if have_char else ' '
                 ),
             )

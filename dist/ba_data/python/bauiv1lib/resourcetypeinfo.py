@@ -22,6 +22,9 @@ class ResourceTypeInfoWindow(PopupWindow):
         origin_widget: bui.Widget,
     ):
         assert bui.app.classic is not None
+
+        self._uiopenstate = bui.UIOpenState(f'resourcetypeinfo{resource_type}')
+
         uiscale = bui.app.ui_v1.uiscale
         scale = (
             2.0
@@ -87,7 +90,9 @@ class ResourceTypeInfoWindow(PopupWindow):
                     label=bui.Lstr(resource='tokens.getTokensText'),
                     size=(bwidth, bheight),
                     autoselect=True,
-                    on_activate_call=bui.WeakCall(self._on_get_tokens_press),
+                    on_activate_call=bui.WeakCallStrict(
+                        self._on_get_tokens_press
+                    ),
                 )
 
         elif resource_type == 'trophies':

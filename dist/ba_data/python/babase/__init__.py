@@ -7,6 +7,7 @@ directly. Instead one should use purpose-built packages such as
 :mod:`bascenev1` or :mod:`bauiv1` which themselves import various
 functionality from here and reexpose it in a more focused way.
 """
+
 # pylint: disable=redefined-builtin
 
 # ba_meta require api 9
@@ -15,14 +16,14 @@ functionality from here and reexpose it in a more focused way.
 # from other modules/packages. Code *within* this package should import
 # things from this package's submodules directly to reduce the chance of
 # dependency loops. The exception is TYPE_CHECKING blocks and
-# annotations since those aren't evaluated at runtime.
+# annotations - since those aren't evaluated at runtime, it is cleaner
+# looking to use top level names directly.
 
 import _babase
 from _babase import (
     add_clean_frame_callback,
     allows_ticket_sales,
     android_get_external_files_dir,
-    app_instance_uuid,
     appname,
     appnameupper,
     apptime,
@@ -42,6 +43,7 @@ from _babase import (
     clipboard_set_text,
     ContextCall,
     ContextRef,
+    crash,
     displaytime,
     displaytimer,
     DisplayTimer,
@@ -125,6 +127,7 @@ from _babase import (
 )
 
 from babase._accountv2 import AccountV2Handle, AccountV2Subsystem
+from babase._analytics import AnalyticsSubsystem
 from babase._app import App, AppState
 from babase._appcomponent import AppComponentSubsystem
 from babase._appconfig import commit_app_config
@@ -134,68 +137,71 @@ from babase._appsubsystem import AppSubsystem
 from babase._appmodeselector import AppModeSelector
 from babase._appconfig import AppConfig
 from babase._apputils import (
+    AppHealthSubsystem,
+    get_remote_app_name,
     handle_leftover_v1_cloud_log_file,
     is_browser_likely_available,
-    get_remote_app_name,
-    AppHealthSubsystem,
     utc_now_cloud,
 )
 from babase._cloud import CloudSubscription
 from babase._devconsole import (
     DevConsoleButtonDef,
+    DevConsoleSubsystem,
     DevConsoleTab,
     DevConsoleTabEntry,
-    DevConsoleSubsystem,
 )
 from babase._discord import DiscordSubsystem
 from babase._emptyappmode import EmptyAppMode
 from babase._error import (
+    ActivityNotFoundError,
+    ActorNotFoundError,
     ContextError,
+    DelegateNotFoundError,
+    InputDeviceNotFoundError,
+    MapNotFoundError,
+    NodeNotFoundError,
     NotFoundError,
     PlayerNotFoundError,
-    SessionPlayerNotFoundError,
-    NodeNotFoundError,
-    ActorNotFoundError,
-    InputDeviceNotFoundError,
-    WidgetNotFoundError,
-    ActivityNotFoundError,
-    TeamNotFoundError,
-    MapNotFoundError,
-    SessionTeamNotFoundError,
     SessionNotFoundError,
-    DelegateNotFoundError,
+    SessionPlayerNotFoundError,
+    SessionTeamNotFoundError,
+    TeamNotFoundError,
+    WidgetNotFoundError,
 )
 from babase._gc import GarbageCollectionSubsystem
 from babase._general import (
-    DisplayTime,
     AppTime,
-    WeakCall,
     Call,
-    existing,
+    CallPartial,
+    CallStrict,
+    DisplayTime,
     Existable,
-    verify_object_death,
-    storagename,
-    getclass,
+    WeakCall,
+    WeakCallPartial,
+    WeakCallStrict,
+    existing,
     get_type_name,
+    getclass,
+    storagename,
+    verify_object_death,
 )
-from babase._language import Lstr, LanguageSubsystem
+from babase._language import LanguageSubsystem, Lstr
 from babase._locale import LocaleSubsystem
 from babase._logging import (
-    balog,
     accountlog,
     applog,
+    balog,
     lifecyclelog,
     netlog,
     uilog,
 )
 from babase._login import LoginAdapter, LoginInfo
-
 from babase._mgen.enums import (
-    Permission,
-    SpecialChar,
     InputType,
-    UIScale,
+    Permission,
     QuitType,
+    SpecialChar,
+    UIScale,
 )
 from babase._math import normalized_color, is_point_in_box, vec3validate
 from babase._meta import MetadataSubsystem
@@ -216,6 +222,7 @@ __all__ = [
     'ActorNotFoundError',
     'allows_ticket_sales',
     'add_clean_frame_callback',
+    'AnalyticsSubsystem',
     'android_get_external_files_dir',
     'app',
     'App',
@@ -227,7 +234,6 @@ __all__ = [
     'AppIntentExec',
     'AppMode',
     'AppState',
-    'app_instance_uuid',
     'applog',
     'appname',
     'appnameupper',
@@ -242,6 +248,8 @@ __all__ = [
     'atexit',
     'balog',
     'Call',
+    'CallPartial',
+    'CallStrict',
     'fullscreen_control_available',
     'fullscreen_control_get',
     'fullscreen_control_key_shortcut',
@@ -257,6 +265,7 @@ __all__ = [
     'ContextCall',
     'ContextError',
     'ContextRef',
+    'crash',
     'DelegateNotFoundError',
     'DevConsoleButtonDef',
     'DevConsoleTab',
@@ -391,6 +400,8 @@ __all__ = [
     'vec3validate',
     'verify_object_death',
     'WeakCall',
+    'WeakCallPartial',
+    'WeakCallStrict',
     'WidgetNotFoundError',
     'workspaces_in_use',
     'WorkspaceSubsystem',

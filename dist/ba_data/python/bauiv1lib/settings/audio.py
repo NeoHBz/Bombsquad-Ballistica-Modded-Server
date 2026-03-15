@@ -20,7 +20,6 @@ class AudioSettingsWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from bauiv1lib.config import ConfigNumberEdit
 
@@ -214,7 +213,8 @@ class AudioSettingsWindow(bui.MainWindow):
                 color=(0.5, 1, 0.5),
             )
             bui.apptimer(
-                1.0, bui.Call(bui.request_permission, bui.Permission.STORAGE)
+                1.0,
+                bui.CallStrict(bui.request_permission, bui.Permission.STORAGE),
             )
             return
 

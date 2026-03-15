@@ -20,7 +20,6 @@ class AchievementsWindow(bui.MainWindow):
         auxiliary_style: bool = True,
     ):
         # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from baclassic import (
             CHEST_APPEARANCE_DISPLAY_INFOS,
@@ -29,6 +28,8 @@ class AchievementsWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
+
+        self._uiopenstate = bui.UIOpenState('classicachievements')
 
         self._width = 800 if uiscale is bui.UIScale.SMALL else 550
         self._height = (

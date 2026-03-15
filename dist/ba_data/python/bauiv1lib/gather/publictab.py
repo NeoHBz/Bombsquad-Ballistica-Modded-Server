@@ -12,6 +12,7 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast, override
 
+from bacommon.analytics import ClassicAnalyticsEvent
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
 import bascenev1 as bs
@@ -94,7 +95,6 @@ class UIRow:
         tab: PublicGatherTab,
     ) -> None:
         """Update for the given data."""
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-positional-arguments
 
         plus = bui.app.plus
@@ -117,11 +117,13 @@ class UIRow:
             size=(sub_scroll_width * 0.46, 20),
             position=(0 + hpos, 4 + vpos),
             selectable=True,
-            on_select_call=bui.WeakCall(
+            on_select_call=bui.WeakCallStrict(
                 tab.set_public_party_selection,
                 Selection(party.get_key(), SelectionComponent.NAME),
             ),
-            on_activate_call=bui.WeakCall(tab.on_public_party_activate, party),
+            on_activate_call=bui.WeakCallStrict(
+                tab.on_public_party_activate, party
+            ),
             click_activate=True,
             maxwidth=sub_scroll_width * 0.45,
             corner_scale=1.4,
@@ -160,8 +162,8 @@ class UIRow:
                 label=bui.Lstr(resource='statsText'),
                 parent=columnwidget,
                 autoselect=True,
-                on_activate_call=bui.Call(bui.open_url, url),
-                on_select_call=bui.WeakCall(
+                on_activate_call=bui.CallStrict(bui.open_url, url),
+                on_select_call=bui.WeakCallStrict(
                     tab.set_public_party_selection,
                     Selection(party.get_key(), SelectionComponent.STATS_BUTTON),
                 ),
@@ -268,7 +270,9 @@ class AddrFetchThread(Thread):
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.connect(('8.8.8.8', 80))
             val = sock.getsockname()[0]
-            bui.pushcall(bui.Call(self._call, val), from_other_thread=True)
+            bui.pushcall(
+                bui.CallStrict(self._call, val), from_other_thread=True
+            )
         except Exception as exc:
             from efro.error import is_udp_communication_error
 
@@ -334,7 +338,7 @@ class PingThread(Thread):
                 time.sleep(1)
             ping = (time.time() - starttime) * 1000.0
             bui.pushcall(
-                bui.Call(
+                bui.CallStrict(
                     self._call,
                     self._address,
                     self._port,
@@ -497,11 +501,13 @@ class PublicGatherTab(GatherTab):
         # Attempt to fetch our local address so we have it for error
         # messages.
         if self._local_address is None:
-            AddrFetchThread(bui.WeakCall(self._fetch_local_addr_cb)).start()
+            AddrFetchThread(
+                bui.WeakCallPartial(self._fetch_local_addr_cb)
+            ).start()
 
         self._set_sub_tab(self._sub_tab, region_width, region_height)
         self._update_timer = bui.AppTimer(
-            0.1, bui.WeakCall(self._update), repeat=True
+            0.1, bui.WeakCallStrict(self._update), repeat=True
         )
         return self._container
 
@@ -814,7 +820,7 @@ class PublicGatherTab(GatherTab):
             parent=self._container,
             id=f'{self._idprefix}|maxsizeminus',
             size=(40, 40),
-            on_activate_call=bui.WeakCall(
+            on_activate_call=bui.WeakCallStrict(
                 self._on_max_public_party_size_minus_press
             ),
             position=(280 + xoffs, v - 26),
@@ -825,7 +831,7 @@ class PublicGatherTab(GatherTab):
             parent=self._container,
             id=f'{self._idprefix}|maxsizeplus',
             size=(40, 40),
-            on_activate_call=bui.WeakCall(
+            on_activate_call=bui.WeakCallStrict(
                 self._on_max_public_party_size_plus_press
             ),
             position=(350 + xoffs, v - 26),
@@ -1154,7 +1160,7 @@ class PublicGatherTab(GatherTab):
 
             # Now, new or not, update its values.
             party.queue = party_in.get('q')
-            assert isinstance(party.queue, (str, type(None)))
+            assert isinstance(party.queue, str | None)
             party.port = port
             party.name = party_in['n']
             assert isinstance(party.name, str)
@@ -1167,7 +1173,7 @@ class PublicGatherTab(GatherTab):
             party.ping_interval = 0.001 * party_in['pi']
             assert isinstance(party.ping_interval, float)
             party.stats_addr = party_in['sa']
-            assert isinstance(party.stats_addr, (str, type(None)))
+            assert isinstance(party.stats_addr, str | None)
 
             # Make sure the party's UI gets updated.
             party.clean_display_index = None
@@ -1255,7 +1261,9 @@ class PublicGatherTab(GatherTab):
                         'proto': bs.protocol_version(),
                         'lang': bui.app.lang.language,
                     },
-                    callback=bui.WeakCall(self._on_public_party_query_result),
+                    callback=bui.WeakCallPartial(
+                        self._on_public_party_query_result
+                    ),
                 )
                 plus.run_v1_account_transactions()
             else:
@@ -1297,7 +1305,9 @@ class PublicGatherTab(GatherTab):
                 party.ping_attempts += 1
 
                 PingThread(
-                    party.address, party.port, bui.WeakCall(self._ping_callback)
+                    party.address,
+                    party.port,
+                    bui.WeakCallPartial(self._ping_callback),
                 ).start()
 
     def _ping_callback(
@@ -1413,7 +1423,9 @@ class PublicGatherTab(GatherTab):
         bui.app.classic.master_server_v1_get(
             'bsAccessCheck',
             {'b': bui.app.env.engine_build_number},
-            callback=bui.WeakCall(self._on_public_party_accessible_response),
+            callback=bui.WeakCallPartial(
+                self._on_public_party_accessible_response
+            ),
         )
 
     def _on_start_advertizing_press(self) -> None:
@@ -1483,6 +1495,13 @@ class PublicGatherTab(GatherTab):
     def on_public_party_activate(self, party: PartyEntry) -> None:
         """Called when a party is clicked or otherwise activated."""
         self.save_state()
+
+        bui.app.analytics.submit_event(
+            ClassicAnalyticsEvent(
+                ClassicAnalyticsEvent.EventType.JOIN_PUBLIC_PARTY
+            )
+        )
+
         if party.queue is not None:
             from bauiv1lib.partyqueue import PartyQueueWindow
 

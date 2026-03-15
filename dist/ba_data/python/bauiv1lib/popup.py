@@ -131,8 +131,6 @@ class PopupMenuWindow(PopupWindow):
     ):
         # FIXME: Clean up a bit.
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         if choices_disabled is None:
             choices_disabled = []
         if choices_display is None:
@@ -234,7 +232,7 @@ class PopupMenuWindow(PopupWindow):
             wdg = bui.textwidget(
                 parent=self._columnwidget,
                 size=(self._width - 40, 28),
-                on_select_call=bui.Call(self._select, index),
+                on_select_call=bui.CallStrict(self._select, index),
                 click_activate=True,
                 color=(
                     (0.5, 0.5, 0.5, 0.5)
@@ -277,7 +275,7 @@ class PopupMenuWindow(PopupWindow):
         if delegate is not None:
             # Call this in a timer so it doesn't interfere with us killing
             # our widgets and whatnot.
-            call = bui.Call(
+            call = bui.CallStrict(
                 delegate.popup_menu_selected_choice, self, self._current_choice
             )
             bui.apptimer(0, call)
@@ -327,7 +325,6 @@ class PopupMenu:
         button_size: tuple[float, float] = (160.0, 50.0),
         autoselect: bool = True,
     ):
-        # pylint: disable=too-many-locals
         if choices_disabled is None:
             choices_disabled = []
         if choices_display is None:

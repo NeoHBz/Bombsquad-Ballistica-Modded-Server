@@ -27,7 +27,6 @@ class AboutGatherTab(GatherTab):
         region_bottom: float,
     ) -> bui.Widget:
         # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-positional-arguments
 
         plus = bui.app.plus
@@ -160,7 +159,7 @@ class AboutGatherTab(GatherTab):
                     fallback_resource='gatherWindow.getFriendInviteCodeText',
                 ),
                 autoselect=True,
-                on_activate_call=bui.WeakCall(self._invite_to_try_press),
+                on_activate_call=bui.WeakCallStrict(self._invite_to_try_press),
                 up_widget=tab_button,
                 show_buffer_top=500,
             )
@@ -190,7 +189,9 @@ class AboutGatherTab(GatherTab):
                 textcolor=(0.6, 0.6, 1),
                 label=bui.Lstr(resource='discordJoinText'),
                 autoselect=True,
-                on_activate_call=bui.WeakCall(self._join_the_discord_press),
+                on_activate_call=bui.WeakCallStrict(
+                    self._join_the_discord_press
+                ),
                 up_widget=(
                     invite_button if invite_button is not None else tab_button
                 ),

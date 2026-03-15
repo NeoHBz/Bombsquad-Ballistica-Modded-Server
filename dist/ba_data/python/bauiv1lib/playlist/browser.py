@@ -28,7 +28,6 @@ class PlaylistBrowserWindow(bui.MainWindow):
         playlist_select_context: PlaylistSelectContext | None = None,
     ):
         # pylint: disable=cyclic-import
-        # pylint: disable=too-many-statements
         from bauiv1lib.playlist import PlaylistTypeVars
 
         # Store state for when we exit the next game.
@@ -190,7 +189,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
         # refresh).
         self._update()
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
 
     @override
@@ -378,8 +377,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
             plus.run_v1_account_transactions()
 
     def _refresh(self) -> None:
-        # FIXME: Should tidy this up.
         # pylint: disable=too-many-statements
+        # FIXME: Should tidy this up.
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-nested-blocks
@@ -527,10 +526,12 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     )
                 bui.buttonwidget(
                     edit=btn,
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._on_playlist_press, btn, name
                     ),
-                    on_select_call=bui.Call(self._on_playlist_select, name),
+                    on_select_call=bui.CallStrict(
+                        self._on_playlist_select, name
+                    ),
                 )
 
                 # Top row biases things up more to show header above it.

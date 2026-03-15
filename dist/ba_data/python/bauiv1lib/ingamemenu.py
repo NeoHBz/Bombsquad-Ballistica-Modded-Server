@@ -177,7 +177,9 @@ class InGameMenuWindow(bui.MainWindow):
 
             # Keep updating in a timer in case it gets changed elsewhere.
             self._change_replay_speed_timer = bui.AppTimer(
-                0.25, bui.WeakCall(self._change_replay_speed, 0), repeat=True
+                0.25,
+                bui.WeakCallStrict(self._change_replay_speed, 0),
+                repeat=True,
             )
             btn = bui.buttonwidget(
                 parent=self._root_widget,
@@ -190,7 +192,7 @@ class InGameMenuWindow(bui.MainWindow):
                 size=(b_size, b_size),
                 label='',
                 autoselect=True,
-                on_activate_call=bui.Call(self._change_replay_speed, -1),
+                on_activate_call=bui.CallStrict(self._change_replay_speed, -1),
             )
             bui.textwidget(
                 parent=self._root_widget,
@@ -213,7 +215,7 @@ class InGameMenuWindow(bui.MainWindow):
                 size=(b_size, b_size),
                 label='',
                 autoselect=True,
-                on_activate_call=bui.Call(self._change_replay_speed, 1),
+                on_activate_call=bui.CallStrict(self._change_replay_speed, 1),
             )
             bui.textwidget(
                 parent=self._root_widget,
@@ -240,7 +242,7 @@ class InGameMenuWindow(bui.MainWindow):
                     else bui.SpecialChar.PAUSE_BUTTON
                 ),
                 autoselect=True,
-                on_activate_call=bui.Call(self._pause_or_resume_replay),
+                on_activate_call=bui.CallStrict(self._pause_or_resume_replay),
             )
             btn = bui.buttonwidget(
                 parent=self._root_widget,
@@ -253,7 +255,7 @@ class InGameMenuWindow(bui.MainWindow):
                 size=(b_size, b_size),
                 label='',
                 autoselect=True,
-                on_activate_call=bui.WeakCall(self._rewind_replay),
+                on_activate_call=bui.WeakCallStrict(self._rewind_replay),
             )
             bui.textwidget(
                 parent=self._root_widget,
@@ -280,7 +282,7 @@ class InGameMenuWindow(bui.MainWindow):
                 size=(b_size, b_size),
                 label='',
                 autoselect=True,
-                on_activate_call=bui.WeakCall(self._forward_replay),
+                on_activate_call=bui.WeakCallStrict(self._forward_replay),
             )
             bui.textwidget(
                 parent=self._root_widget,
@@ -306,9 +308,6 @@ class InGameMenuWindow(bui.MainWindow):
     def _refresh_in_game(
         self, positions: list[tuple[float, float, float]]
     ) -> tuple[float, float, float]:
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         assert bui.app.classic is not None
         custom_menu_entries: list[dict[str, Any]] = []
         session = bs.get_foreground_host_session()
@@ -408,9 +407,11 @@ class InGameMenuWindow(bui.MainWindow):
             resume = bool(entry.get('resume_on_call', True))
 
             if resume:
-                call = bui.Call(self._resume_and_call, entry['call'])
+                call = bui.CallStrict(self._resume_and_call, entry['call'])
             else:
-                call = bui.Call(entry['call'], bui.WeakCall(self._resume))
+                call = bui.CallStrict(
+                    entry['call'], bui.WeakCallStrict(self._resume)
+                )
 
             bui.buttonwidget(
                 parent=self._root_widget,

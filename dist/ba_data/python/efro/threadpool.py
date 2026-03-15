@@ -10,6 +10,8 @@ import threading
 from typing import TYPE_CHECKING, ParamSpec
 from concurrent.futures import ThreadPoolExecutor
 
+from efro.util import strip_exception_tracebacks
+
 if TYPE_CHECKING:
     from typing import Any, Callable
     from concurrent.futures import Future
@@ -49,9 +51,11 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
     ) -> None:
         """Submit work to the threadpool with no expectation of waiting.
 
-        Any errors occurring in the passed callable will be logged. This
-        call will block and log a warning if the threadpool reaches its
-        max queued no-wait call count.
+        Any exceptions raised by the callable are automatically caught
+        and logged via ``logger.exception()``, so callers do not need
+        their own error handling for fire-and-forget work. This call will
+        block and log a warning if the threadpool reaches its max queued
+        no-wait call count.
         """
         # If we're too backlogged, issue a warning and block until we
         # aren't. We don't bother with the lock here since this can be
@@ -83,5 +87,8 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
             self.no_wait_count -= 1
         try:
             fut.result()
-        except Exception:
+        except Exception as exc:
             logger.exception('Error in work submitted via submit_no_wait().')
+            # We're done with this exception, so strip its traceback to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)

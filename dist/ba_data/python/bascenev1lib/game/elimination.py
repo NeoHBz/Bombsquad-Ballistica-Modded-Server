@@ -408,15 +408,12 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
                 # Now for each team, cycle through our available players
                 # adding icons.
                 for team in self.teams:
-                    y = 0
                     if team.id == 0:
                         xval = -60
                         x_offs = -78
                     else:
                         xval = 60
                         x_offs = 78
-                    if team.id ==2:
-                        y=60
                     is_first = True
                     test_lives = 1
                     while True:
@@ -429,34 +426,33 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
                             break
                         for player in players_with_lives:
                             player.icons.append(
-                                Icon(player,
-                                     position=(xval, (y + 23 if is_first and team.id != 2 else y + 30 if is_first and team.id == 2 else y + 25)),
-                                     scale=0.7 if is_first else 0.5,
-                                     name_maxwidth=120 if is_first else 75,
-                                     name_scale=0.8 if is_first else 1.0,
-                                     flatness=0.0 if is_first else 1.0,
-                                     shadow=0.5 if is_first else 1.0,
-                                     show_death=is_first,
-                                     show_lives=False))
+                                Icon(
+                                    player,
+                                    position=(xval, (40 if is_first else 25)),
+                                    scale=1.0 if is_first else 0.5,
+                                    name_maxwidth=130 if is_first else 75,
+                                    name_scale=0.8 if is_first else 1.0,
+                                    flatness=0.0 if is_first else 1.0,
+                                    shadow=0.5 if is_first else 1.0,
+                                    show_death=is_first,
+                                    show_lives=False,
+                                )
+                            )
                             xval += x_offs * (0.8 if is_first else 0.56)
                             is_first = False
                         test_lives += 1
             # Non-solo mode.
             else:
                 for team in self.teams:
-                    y = 0
                     if team.id == 0:
-                        xval = -150
-                        x_offs = -85
-                    elif team.id == 1:
                         xval = -50
-                        x_offs = 85
+                        x_offs = -85
                     else:
                         xval = 50
                         x_offs = 85
                     for player in team.players:
                         for icon in player.icons:
-                            icon.set_position_and_scale((xval, y + 30), 0.7)
+                            icon.set_position_and_scale((xval, 30), 0.7)
                             icon.update_for_lives()
                         xval += x_offs
 
@@ -495,7 +491,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
         """Spawn a player (override)."""
         actor = self.spawn_player_spaz(player, self._get_spawn_point(player))
         if not self._solo_mode:
-            bs.timer(0.3, bs.Call(self._print_lives, player))
+            bs.timer(0.3, bs.CallStrict(self._print_lives, player))
 
         # If we have any icons, update their state.
         for icon in player.icons:
@@ -582,8 +578,9 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
 
             # In solo, put ourself at the back of the spawn order.
             if self._solo_mode:
-                player.team.spawn_order.remove(player)
-                player.team.spawn_order.append(player)
+                if player in player.team.spawn_order:
+                    player.team.spawn_order.remove(player)
+                    player.team.spawn_order.append(player)
 
     def _update(self) -> None:
         if self._solo_mode:

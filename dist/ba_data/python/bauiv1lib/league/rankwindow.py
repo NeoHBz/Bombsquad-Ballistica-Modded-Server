@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """UI related to league rank."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -9,9 +10,10 @@ import copy
 import logging
 from typing import TYPE_CHECKING, override
 
+import bacommon.classic
+import bauiv1 as bui
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.popup import PopupMenu
-import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any
@@ -29,6 +31,8 @@ class LeagueRankWindow(bui.MainWindow):
         # pylint: disable=too-many-statements
         plus = bui.app.plus
         assert plus is not None
+
+        self._uiopenstate = bui.UIOpenState('classicleaguerank')
 
         bui.set_analytics_screen('League Rank Window')
 
@@ -216,9 +220,33 @@ class LeagueRankWindow(bui.MainWindow):
             self._update_for_league_rank_data(info)
 
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
         self._update(show=info is None)
+
+    def _on_p_button_info_response(
+        self,
+        response: (
+            bacommon.classic.GetClassicLeaguePresidentButtonInfoResponse
+            | Exception
+        ),
+    ) -> None:
+
+        # If our window has died, no-op.
+        if not self._root_widget:
+            return
+
+        if isinstance(response, Exception) or response.name is None:
+            bui.textwidget(
+                edit=self._president_name, color=(0.6, 0.6, 1, 0.2), text='-'
+            )
+            return
+
+        bui.textwidget(
+            edit=self._president_name,
+            color=(0.6, 0.6, 1, 0.9),
+            text=response.name,
+        )
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
@@ -381,11 +409,26 @@ class LeagueRankWindow(bui.MainWindow):
             self._doing_power_ranking_query = True
             plus.power_ranking_query(
                 season=self._requested_season,
-                callback=bui.WeakCall(self._on_power_ranking_query_response),
+                callback=bui.WeakCallPartial(
+                    self._on_power_ranking_query_response
+                ),
             )
+            # Also kick off a query to v2 for latest league-president
+            # info.
+            if plus.accounts.primary is not None:
+                with plus.accounts.primary:
+                    plus.cloud.send_message_cb(
+                        (
+                            bacommon.classic
+                        ).GetClassicLeaguePresidentButtonInfoMessage(
+                            season=self._requested_season
+                        ),
+                        on_response=bui.WeakCallPartial(
+                            self._on_p_button_info_response
+                        ),
+                    )
 
     def _refresh(self) -> None:
-        # pylint: disable=too-many-statements
 
         plus = bui.app.plus
         assert plus is not None
@@ -413,7 +456,7 @@ class LeagueRankWindow(bui.MainWindow):
         v2 = v - 60
         worth_color = (0.6, 0.6, 0.65)
         tally_color = (0.5, 0.6, 0.8)
-        spc = 43
+        spc = 23
 
         h_offs_tally = 150
         tally_maxwidth = 120
@@ -440,7 +483,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(200, 80),
             icon=bui.gettexture('achievementsIcon'),
             autoselect=True,
-            on_activate_call=bui.WeakCall(self._on_achievements_press),
+            on_activate_call=bui.WeakCallStrict(self._on_achievements_press),
             up_widget=self._back_button,
             left_widget=self._back_button,
             color=(0.5, 0.5, 0.6),
@@ -471,7 +514,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(200, 80),
             icon=bui.gettexture('medalSilver'),
             autoselect=True,
-            on_activate_call=bui.WeakCall(self._on_trophies_press),
+            on_activate_call=bui.WeakCallStrict(self._on_trophies_press),
             left_widget=self._back_button,
             color=(0.5, 0.5, 0.6),
             textcolor=(0.7, 0.7, 0.8),
@@ -518,7 +561,9 @@ class LeagueRankWindow(bui.MainWindow):
                 icon_color=(0.5, 0, 0.5),
                 label=bui.Lstr(resource='coopSelectWindow.activityText'),
                 autoselect=True,
-                on_activate_call=bui.WeakCall(self._on_activity_mult_press),
+                on_activate_call=bui.WeakCallStrict(
+                    self._on_activity_mult_press
+                ),
                 left_widget=self._back_button,
                 color=(0.5, 0.5, 0.6),
                 textcolor=(0.7, 0.7, 0.8),
@@ -550,7 +595,9 @@ class LeagueRankWindow(bui.MainWindow):
             icon_color=(0.3, 0, 0.3),
             label=bui.Lstr(resource='league.upToDateBonusText'),
             autoselect=True,
-            on_activate_call=bui.WeakCall(self._on_up_to_date_bonus_press),
+            on_activate_call=bui.WeakCallStrict(
+                self._on_up_to_date_bonus_press
+            ),
             left_widget=self._back_button,
             color=(0.5, 0.5, 0.6),
             textcolor=(0.7, 0.7, 0.8),
@@ -597,6 +644,64 @@ class LeagueRankWindow(bui.MainWindow):
             scale=0.9,
             color=tally_color,
             maxwidth=tally_maxwidth,
+        )
+
+        self._president_button = bui.buttonwidget(
+            parent=w_parent,
+            id=f'{self.main_window_id_prefix}|president',
+            label='',
+            position=(self._xoffs + h2 - 60, v2 - 100),
+            color=(0.7, 0.55, 0.9),
+            texture=bui.gettexture('buttonSquareWide'),
+            opacity=0.3,
+            size=(200, 80),
+            autoselect=True,
+            on_activate_call=bui.WeakCallStrict(self._on_president_press),
+        )
+        self._president_label = bui.textwidget(
+            parent=w_parent,
+            text=bui.Lstr(resource='league.leaguePresidentText'),
+            flatness=1.0,
+            shadow=0.0,
+            color=(0.6, 0.6, 1, 0.7),
+            draw_controller=self._president_button,
+            scale=0.5,
+            h_align='center',
+            v_align='center',
+            maxwidth=140,
+            position=(self._xoffs + h2 - 60 + 100, v2 - 100 + 59),
+            size=(0, 0),
+        )
+        self._president_name = bui.textwidget(
+            parent=w_parent,
+            text='-',
+            draw_controller=self._president_button,
+            color=(0.6, 0.6, 1, 0.2),
+            flatness=1.0,
+            shadow=0.0,
+            h_align='center',
+            v_align='center',
+            maxwidth=120,
+            position=(self._xoffs + h2 - 60 + 100, v2 - 100 + 34),
+            size=(0, 0),
+        )
+        self._president_star1 = bui.imagewidget(
+            parent=w_parent,
+            draw_controller=self._president_button,
+            texture=bui.gettexture('star'),
+            color=(0.7, 0.55, 0.9),
+            opacity=0.2,
+            position=(self._xoffs + h2 - 60 + 5, v2 - 100 + 17),
+            size=(32, 32),
+        )
+        self._president_star1 = bui.imagewidget(
+            parent=w_parent,
+            draw_controller=self._president_button,
+            texture=bui.gettexture('star'),
+            color=(0.7, 0.55, 0.9),
+            opacity=0.2,
+            position=(self._xoffs + h2 - 60 + 200 - 5 - 32, v2 - 100 + 17),
+            size=(32, 32),
         )
 
         self._season_show_text = bui.textwidget(
@@ -748,7 +853,44 @@ class LeagueRankWindow(bui.MainWindow):
             textcolor=(0.7, 0.7, 0.8),
             size=(230, 60),
             autoselect=True,
-            on_activate_call=bui.WeakCall(self._on_more_press),
+            on_activate_call=bui.WeakCallStrict(self._on_more_press),
+        )
+
+    def _on_president_press(self) -> None:
+        import bacommon.docui.v1 as dui1
+
+        from bauiv1lib.league.presidency import LeaguePresidencyUIController
+        from bauiv1lib.connectivity import wait_for_connectivity
+
+        # No-op if we're not in control.
+        if not self.main_window_has_control():
+            return
+
+        plus = bui.app.plus
+        assert plus is not None
+
+        # We should be signed in at this point, but let's be sure.
+        if plus.accounts.primary is None:
+            bui.screenmessage(
+                bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
+            )
+            bui.getsound('error').play()
+            return
+
+        # Wait for connectivity if need be, then bring up a cloud based
+        # doc-ui window for showing/futzing-with league president stuff.
+        wait_for_connectivity(
+            on_connected=lambda: self.main_window_replace(
+                bui.CallStrict(
+                    LeaguePresidencyUIController().create_window,
+                    dui1.Request('/', args={'season': self._season}),
+                    origin_widget=self._president_button,
+                    auxiliary_style=False,
+                ),
+                extra_type_id=(
+                    LeaguePresidencyUIController
+                ).get_window_extra_type_id(),
+            )
         )
 
     def _on_more_press(self) -> None:
@@ -893,7 +1035,9 @@ class LeagueRankWindow(bui.MainWindow):
                 width=150,
                 button_size=(200, 50),
                 choices=season_choices,
-                on_value_change_call=bui.WeakCall(self._on_season_change),
+                on_value_change_call=bui.WeakCallPartial(
+                    self._on_season_change
+                ),
                 choices_display=season_choices_display,
                 current_choice=self._season,
             )
@@ -1142,7 +1286,7 @@ class LeagueRankWindow(bui.MainWindow):
             widget.delete()
         self._power_ranking_score_widgets = []
 
-        scores = data['scores'] if data is not None else []
+        scores: list = data['scores'] if data is not None else []
         tally_color = (0.5, 0.6, 0.8)
         w_parent = self._subcontainer
         v2 = self._power_ranking_score_v
@@ -1202,7 +1346,7 @@ class LeagueRankWindow(bui.MainWindow):
             self._power_ranking_score_widgets.append(txt)
             bui.textwidget(
                 edit=txt,
-                on_activate_call=bui.Call(
+                on_activate_call=bui.CallStrict(
                     self._show_account_info, score[4], txt
                 ),
             )

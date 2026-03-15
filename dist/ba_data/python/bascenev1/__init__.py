@@ -16,7 +16,6 @@ import logging
 # other modules; the goal is to let most simple mods rely solely on this
 # module to keep things simple.
 
-# from efro.util import set_canonical_module_names
 from babase import (
     ActivityNotFoundError,
     add_clean_frame_callback,
@@ -32,6 +31,8 @@ from babase import (
     apptimer,
     AppTimer,
     Call,
+    CallPartial,
+    CallStrict,
     ContextError,
     ContextRef,
     displaytime,
@@ -63,6 +64,8 @@ from babase import (
     unlock_all_input,
     Vec3,
     WeakCall,
+    WeakCallPartial,
+    WeakCallStrict,
 )
 
 from _bascenev1 import (
@@ -83,6 +86,7 @@ from _bascenev1 import (
     emitfx,
     end_host_scanning,
     get_chat_messages,
+    get_client_ping,
     get_connection_to_host_info,
     get_connection_to_host_info_2,
     get_foreground_host_activity,
@@ -275,6 +279,8 @@ __all__ = [
     'BaseTimer',
     'BoolSetting',
     'Call',
+    'CallPartial',
+    'CallStrict',
     'cameraflash',
     'camerashake',
     'Campaign',
@@ -324,6 +330,7 @@ __all__ = [
     'GameResults',
     'GameTip',
     'get_chat_messages',
+    'get_client_ping',
     'get_connection_to_host_info',
     'get_connection_to_host_info_2',
     'get_default_free_for_all_playlist',
@@ -475,14 +482,10 @@ __all__ = [
     'unlock_all_input',
     'Vec3',
     'WeakCall',
+    'WeakCallPartial',
+    'WeakCallStrict',
     'WinnerGroup',
 ]
-
-# We want stuff here to show up as bascenev1.Foo instead of
-# bascenev1._submodule.Foo.
-# UPDATE: Trying without this for now. Seems like this might cause more
-# harm than good. Can flip it back on if it is missed.
-# set_canonical_module_names(globals())
 
 # Sanity check: we want to keep ballistica's dependencies and
 # bootstrapping order clearly defined; let's check a few particular

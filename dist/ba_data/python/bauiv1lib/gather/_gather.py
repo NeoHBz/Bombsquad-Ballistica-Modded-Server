@@ -74,7 +74,6 @@ class GatherWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from bauiv1lib.gather.abouttab import AboutGatherTab
         from bauiv1lib.gather.manualtab import ManualGatherTab
@@ -212,7 +211,7 @@ class GatherWindow(bui.MainWindow):
                 self._scroll_left + tab_inset,
                 self._scroll_bottom + self._scroll_height - 4.0,
             ),
-            on_select_call=bui.WeakCall(self._set_tab),
+            on_select_call=bui.WeakCallPartial(self._set_tab),
         )
 
         # Now instantiate handlers for these tabs.

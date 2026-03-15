@@ -1,3 +1,4 @@
+❯ cat Dockerfile
 FROM ubuntu:24.04
 
 RUN apt-get update && \
@@ -6,14 +7,27 @@ RUN apt-get update && \
     add-apt-repository ppa:deadsnakes/ppa && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-        python3.13 python3.13-venv libpython3.13 git
+        python3.13 python3.13-venv libpython3.13 git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+COPY . .
 
-COPY dist block_banned_ips.py bombsquad_server config.json nbstreamreader.py .
+# 1. Clean up dummymodules permanently
+RUN rm -rf dist/dummymodules
 
-RUN chmod +x bombsquad_server
+# 2. Install mod dependencies (pure-Python or aarch64 wheels)
+RUN python3.13 -m ensurepip --upgrade && \
+    python3.13 -m pip install --no-cache-dir \
+      aiohttp discord.py flask requests cryptography pywebpush pyyaml \
+      waitress ecdsa
+
+# 3. Fix permissions
+RUN chmod +x bombsquad_server && \
+    chmod +x dist/bombsquad_headless dist/bombsquad_headless_aarch64
 
 EXPOSE 43210/udp
 
+# 4. Launch using the server manager (shebang uses python3.13).
 CMD ["./bombsquad_server"]

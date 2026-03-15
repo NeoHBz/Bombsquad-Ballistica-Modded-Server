@@ -148,7 +148,7 @@ class AccountViewerWindow(PopupWindow):
                 'accountID': self._account_id,
                 'profileID': self._profile_id,
             },
-            callback=bui.WeakCall(self._on_query_response),
+            callback=bui.WeakCallPartial(self._on_query_response),
         )
 
     def popup_menu_selected_choice(
@@ -220,10 +220,10 @@ class AccountViewerWindow(PopupWindow):
         )
 
     def _on_query_response(self, data: dict[str, Any] | None) -> None:
+        # pylint: disable=too-many-statements
         # FIXME: Tidy this up.
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-nested-blocks
         assert bui.app.classic is not None
         if data is None:

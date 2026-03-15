@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Snippets of code for use by the c++ layer."""
+
 # (most of these are self-explanatory)
 # pylint: disable=missing-function-docstring
 from __future__ import annotations
@@ -139,14 +140,6 @@ def root_ui_squad_button_press() -> None:
     from bauiv1._appsubsystem import UIV1AppSubsystem
 
     _root_ui_button_press(UIV1AppSubsystem.RootUIElement.SQUAD_BUTTON)
-
-
-def on_button_press_x() ->None:
-    print("button X pressed from UI or keyboard")
-
-
-def on_button_press_y() ->None:
-    print("button Y pressed from UI or keyboard")
 
 
 def quit_window(quit_type: babase.QuitType) -> None:

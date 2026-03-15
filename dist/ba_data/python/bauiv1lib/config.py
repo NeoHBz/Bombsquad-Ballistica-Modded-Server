@@ -102,7 +102,6 @@ class ConfigNumberEdit:
         f: int = 1,
         idprefix: str | None = None,
     ):
-        # pylint: disable=too-many-locals
         if displayname is None:
             displayname = configkey
 
@@ -152,7 +151,7 @@ class ConfigNumberEdit:
             size=(28, 28),
             label='-',
             autoselect=True,
-            on_activate_call=bui.Call(self._down),
+            on_activate_call=bui.CallStrict(self._down),
             repeat=True,
             enable_sound=changesound,
         )
@@ -163,7 +162,7 @@ class ConfigNumberEdit:
             size=(28, 28),
             label='+',
             autoselect=True,
-            on_activate_call=bui.Call(self._up),
+            on_activate_call=bui.CallStrict(self._up),
             repeat=True,
             enable_sound=changesound,
         )

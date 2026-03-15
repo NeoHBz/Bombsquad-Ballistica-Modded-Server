@@ -21,11 +21,9 @@ if TYPE_CHECKING:
 class PartyWindow(bui.Window):
     """Party list/chat window."""
 
-    def __del__(self) -> None:
-        bui.set_party_window_open(False)
-
     def __init__(self, origin: Sequence[float] = (0, 0)):
-        bui.set_party_window_open(True)
+
+        self._uiopenstate = bui.UIOpenState('classicparty')
         self._r = 'partyWindow'
         self._popup_type: str | None = None
         self._popup_party_member_client_id: int | None = None
@@ -91,10 +89,11 @@ class PartyWindow(bui.Window):
             label='...',
             autoselect=True,
             button_type='square',
-            on_activate_call=bui.WeakCall(self._on_menu_button_press),
+            on_activate_call=bui.WeakCallStrict(self._on_menu_button_press),
             color=(0.55, 0.73, 0.25),
             iconscale=1.2,
         )
+        self._menu_popup: PopupMenuWindow | None = None
 
         info = bs.get_connection_to_host_info_2()
 
@@ -213,7 +212,7 @@ class PartyWindow(bui.Window):
         self._name_widgets: list[bui.Widget] = []
         self._roster: list[dict[str, Any]] | None = None
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
         self._update()
 
@@ -234,7 +233,7 @@ class PartyWindow(bui.Window):
             maxwidth=self._scroll_width * 0.94,
             shadow=0.3,
             flatness=1.0,
-            on_activate_call=bui.Call(self._copy_msg, msg),
+            on_activate_call=bui.CallStrict(self._copy_msg, msg),
             selectable=True,
         )
 
@@ -278,7 +277,7 @@ class PartyWindow(bui.Window):
             choices.append('add_to_favorites')
             choices_display.append(bui.Lstr(resource='addToFavoritesText'))
 
-        PopupMenuWindow(
+        self._menu_popup = PopupMenuWindow(
             position=self._menu_button.get_screen_space_center(),
             scale=(
                 2.3
@@ -293,9 +292,7 @@ class PartyWindow(bui.Window):
         self._popup_type = 'menu'
 
     def _update(self) -> None:
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-nested-blocks
 
         # update muted state
@@ -428,7 +425,7 @@ class PartyWindow(bui.Window):
                             #  client_id is more readily available though).
                             bui.textwidget(
                                 edit=widget,
-                                on_activate_call=bui.Call(
+                                on_activate_call=bui.CallStrict(
                                     self._on_party_member_press,
                                     self._roster[index]['client_id'],
                                     is_host,
@@ -583,8 +580,9 @@ class PartyWindow(bui.Window):
             )
             bui.getsound('error').play()
 
-    def popup_menu_closing(self, popup_window: PopupWindow) -> None:
+    def popup_menu_closing(self, _popup_window: PopupWindow) -> None:
         """Called when the popup is closing."""
+        self._menu_popup = None
 
     def _on_party_member_press(
         self, client_id: int, is_host: bool, widget: bui.Widget
@@ -600,7 +598,7 @@ class PartyWindow(bui.Window):
             kick_str = bui.Lstr(resource='kickVoteText')
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        PopupMenuWindow(
+        self._menu_popup = PopupMenuWindow(
             position=widget.get_screen_space_center(),
             scale=(
                 2.3
@@ -624,6 +622,10 @@ class PartyWindow(bui.Window):
 
     def close(self) -> None:
         """Close the window."""
+        # exit our menu widget if it's up (likely from a hotkey press)
+        if self._menu_popup is not None:
+            self._menu_popup.on_popup_cancel()
+
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
             return
