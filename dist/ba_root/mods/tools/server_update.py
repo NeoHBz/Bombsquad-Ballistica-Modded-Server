@@ -34,7 +34,11 @@ def updateProfilesJson():
 
 def postStatus():
     link = 'https://bcsservers.ballistica.workers.dev/ping'
-    data = {'name': babase.app.classic.server._config.party_name,
+    server = getattr(babase.app.classic, 'server', None)
+    if server is None:
+        return
+
+    data = {'name': server._config.party_name,
             'port': str(bascenev1.get_game_port()),
             'build': babase.app.env.engine_build_number,
             'bcsversion': VERSION}

@@ -442,10 +442,21 @@ ClassicAppMode.on_activate = new_classic_app_mode_activate
 
 
 def on_classic_app_mode_active():
-    _bascenev1.set_server_name(settings["HostName"])
-    _bascenev1.set_transparent_kickvote(settings["ShowKickVoteStarterName"])
-    _bascenev1.set_kickvote_msg_type(settings["KickVoteMsgType"])
-    _bascenev1.hide_player_device_id(settings["Anti-IdRevealer"])
+    # Some engine hooks changed/vanished in newer API 9 builds.
+    # Apply optional hooks only when available so startup can proceed.
+    if hasattr(_bascenev1, 'set_server_name'):
+        _bascenev1.set_server_name(settings["HostName"])
+    if hasattr(_bascenev1, 'set_transparent_kickvote'):
+        _bascenev1.set_transparent_kickvote(
+            settings["ShowKickVoteStarterName"]
+        )
+    if hasattr(_bascenev1, 'set_kickvote_msg_type'):
+        _bascenev1.set_kickvote_msg_type(settings["KickVoteMsgType"])
+    # This one may exist on _babase in API 9 builds.
+    if hasattr(_bascenev1, 'hide_player_device_id'):
+        _bascenev1.hide_player_device_id(settings["Anti-IdRevealer"])
+    elif hasattr(_babase, 'hide_player_device_id'):
+        _babase.hide_player_device_id(settings["Anti-IdRevealer"])
 
 
 def bcs_verify_client_account_ip(account_id: str, ip: str, client_id: int) -> str | None:

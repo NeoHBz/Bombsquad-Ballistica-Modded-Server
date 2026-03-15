@@ -28,7 +28,12 @@ serverinfo = {}
 class BsDataThread(object):
     def __init__(self):
         global stats
-        stats["name"] = _babase.app.classic.server._config.party_name
+        server = getattr(_babase.app.classic, 'server', None)
+        stats["name"] = (
+            server._config.party_name
+            if server is not None
+            else get_server_settings().get("HostName", "BombSquad Server")
+        )
         stats["discord"] = get_server_settings(
         )["ballistica_web"]["discord_link"]
         stats["vapidKey"] = notification_manager.get_vapid_keys()["public_key"]
@@ -269,7 +274,8 @@ def disable_kick_vote(account_id, duration):
 
 
 def get_server_config():
-    return _babase.app.classic.server._config.__dict__
+    server = getattr(_babase.app.classic, 'server', None)
+    return server._config.__dict__ if server is not None else {}
 
 
 def update_server_config(config):
