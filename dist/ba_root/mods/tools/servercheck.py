@@ -38,7 +38,7 @@ class checkserver(object):
         ipClientMap = {}
         deviceClientMap = {}
         for ros in bs.get_game_roster():
-            ip = _bascenev1.get_client_ip(ros["client_id"])
+            ip = ros.get('address', '')
             device_id = _bascenev1.get_client_public_device_uuid(
                 ros["client_id"])
             if device_id is None:
