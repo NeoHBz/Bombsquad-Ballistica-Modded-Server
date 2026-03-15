@@ -25,6 +25,10 @@ settings = setting.get_settings_data()
 ipjoin = {}
 
 
+def _bypass_new_account_checks() -> bool:
+    return settings.get("devBypassNewAccountChecks", False)
+
+
 class checkserver(object):
     def start(self):
         self.players = []
@@ -169,19 +173,34 @@ def on_player_join_server(pbid, player_data, ip, device_id):
                 clients=[clid])
             bs.disconnect_client(clid)
             return
-        if get_account_age(player_data["accountAge"]) < \
-                settings["minAgeToJoinInHours"]:
+        account_age_raw = player_data.get("accountAge")
+        account_age_hours = get_account_age(account_age_raw)
+        min_age_hours = settings.get("minAgeToJoinInHours", 0)
+        bypass_age_check = _bypass_new_account_checks()
+        logger.log(
+            f"{pbid} | join-age-check | raw={account_age_raw} hours={account_age_hours:.2f} min={min_age_hours} bypass={bypass_age_check}",
+            "sys",
+        )
+        if (not bypass_age_check) and account_age_hours < min_age_hours:
             for ros in bs.get_game_roster():
                 if ros['account_id'] == pbid:
                     bs.broadcastmessage(
                         "New Accounts not allowed here , come back later",
                         color=(1, 0, 0), transient=True,
                         clients=[ros['client_id']])
-                    logger.log(pbid + " | kicked > reason:Banned account")
+                    logger.log(
+                        f"{pbid} | kicked > reason:new-account-join-check raw={account_age_raw} hours={account_age_hours:.2f} min={min_age_hours}",
+                        "sys",
+                    )
                     bs.disconnect_client(ros['client_id'])
 
             return
         else:
+            if bypass_age_check:
+                logger.log(
+                    f"{pbid} | bypassed join-age-check due to devBypassNewAccountChecks",
+                    "sys",
+                )
             current_time = datetime.now()
             if pbid not in serverdata.clients:
                 # ahh , lets reset if plyer joining after some long time
@@ -304,12 +323,17 @@ def get_account_creation_date(pb_id):
         try:
             account_creation = json.loads(account_creation.read())
         except ValueError:
+            logger.log(f"{pb_id} | accountquery returned invalid json", "sys")
             return None
         else:
             created = account_creation.get("created")
             if created is None:
                 # accountquery returns {"error": "account not found"}
                 # for unsupported id formats; treat as unknown age.
+                logger.log(
+                    f"{pb_id} | accountquery has no created field: {account_creation}",
+                    "sys",
+                )
                 return None
             try:
                 if isinstance(created, list) and len(created) >= 6:
@@ -320,6 +344,10 @@ def get_account_creation_date(pb_id):
                 else:
                     return None
             except Exception:
+                logger.log(
+                    f"{pb_id} | failed to parse created value: {created}",
+                    "sys",
+                )
                 return None
             return creation_time.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -390,11 +418,26 @@ def save_age(age, pb_id, display_string):
         display_string=display_string
     )
     thread2.start()
-    if get_account_age(age) < settings["minAgeToJoinInHours"]:
+    age_hours = get_account_age(age)
+    min_age_hours = settings.get("minAgeToJoinInHours", 0)
+    bypass_age_check = _bypass_new_account_checks()
+    logger.log(
+        f"{pb_id} | save-age-check | raw={age} hours={age_hours:.2f} min={min_age_hours} bypass={bypass_age_check}",
+        "sys",
+    )
+    if (not bypass_age_check) and age_hours < min_age_hours:
         msg = "New Accounts not allowed to play here , come back tmrw."
-        logger.log(pb_id + "|| kicked > new account")
+        logger.log(
+            f"{pb_id} | kicked > reason:new-account-save-age-check raw={age} hours={age_hours:.2f} min={min_age_hours}",
+            "sys",
+        )
         _babase.pushcall(babase.CallStrict(kick_by_pb_id, pb_id, msg),
                          from_other_thread=True)
+    elif bypass_age_check:
+        logger.log(
+            f"{pb_id} | bypassed save-age-check due to devBypassNewAccountChecks",
+            "sys",
+        )
 
 
 def save_ids(ids, pb_id, display_string):
@@ -412,6 +455,7 @@ def save_ids(ids, pb_id, display_string):
 
 
 def kick_by_pb_id(pb_id, msg):
+    logger.log(f"{pb_id} | kick_by_pb_id invoked | msg={msg}", "sys")
     for ros in bs.get_game_roster():
         if ros['account_id'] == pb_id:
             bs.broadcastmessage(msg, transient=True,
@@ -423,10 +467,12 @@ def get_account_age(ct):
     # If age cannot be resolved for this account id format, fail open
     # so players are not incorrectly treated as brand-new accounts.
     if not ct:
+        logger.log("get_account_age: empty value -> inf", "sys")
         return float("inf")
     try:
         creation_time = datetime.strptime(str(ct), "%Y-%m-%d %H:%M:%S")
     except Exception:
+        logger.log(f"get_account_age: unparsable value '{ct}' -> inf", "sys")
         return float("inf")
     now = datetime.now()
     delta = now - creation_time

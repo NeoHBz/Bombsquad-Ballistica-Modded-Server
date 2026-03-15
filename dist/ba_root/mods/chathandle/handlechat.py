@@ -69,12 +69,25 @@ def filter_chat_message(msg, client_id):
                 "You are on mute, maybe try after some time", transient=True,
                 clients=[client_id])
             return None
-        elif servercheck.get_account_age(
-                serverdata.clients[acid]["accountAge"]) < settings[
-                'minAgeToChatInHours']:
+        elif (
+            not settings.get("devBypassNewAccountChecks", False)
+            and servercheck.get_account_age(
+                serverdata.clients[acid]["accountAge"]
+            )
+            < settings['minAgeToChatInHours']
+        ):
+            logger.log(
+                f"{acid} | chat-age-check blocked | raw={serverdata.clients[acid]['accountAge']} min={settings['minAgeToChatInHours']}",
+                "sys",
+            )
             bs.broadcastmessage("New accounts not allowed to chat here",
                                 transient=True, clients=[client_id])
             return None
+        elif settings.get("devBypassNewAccountChecks", False):
+            logger.log(
+                f"{acid} | chat-age-check bypassed due to devBypassNewAccountChecks",
+                "sys",
+            )
         else:
             if msg.startswith(",") and settings["allowTeamChat"]:
                 return command_executor.QuickAccess(msg, client_id)
