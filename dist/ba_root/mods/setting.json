@@ -153,7 +153,8 @@
     "ffasmash": 412179,
     "smash": 412151,
     "soccer": 412160,
-    "team": 12345
+    "team": 12345,
+    "default": 591611
   },
   "regularWelcomeMsg": "Welcome Back",
   "sameCharacterForTeam": false,

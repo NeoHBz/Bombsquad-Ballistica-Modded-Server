@@ -10,11 +10,7 @@
             "ALL"
         ],
         "ids": [
-            "pb-IF48VWkBFQ",
-            "pb-JiNJARBaXEFBVF9HFkNXXF1EF0ZaRlZE",
-            "pb-IF4TVWwZUQ==",
-            "pb-IF4SVW9dEg==",
-            "pb-IF5XUm9eAg=="
+            "a-b18966525"
         ]
     },
     "admin": {
@@ -28,7 +24,7 @@
             "createrole"
         ],
         "ids": [
-            "pb-IF4TVWwZUQ=="
+            "a-b18966525"
         ]
     },
     "vip": {
