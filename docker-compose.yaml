@@ -1,0 +1,12 @@
+services:
+  bombsquad:
+    container_name: bombsquad_server
+    build: .
+    ports:
+      - "43210:43210/udp"
+    volumes:
+      - /etc/machine-id:/etc/machine-id:ro
+      - ./config.json:/app/config.json
+    logging:
+      options:
+        max-size: "1g"
