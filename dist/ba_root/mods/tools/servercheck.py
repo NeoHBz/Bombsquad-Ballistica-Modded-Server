@@ -305,15 +305,24 @@ def get_account_creation_date(pb_id):
         try:
             account_creation = json.loads(account_creation.read())
         except ValueError:
-            pass
+            return None
         else:
-            creation_time = account_creation["created"]
-            creation_time = map(str, creation_time)
-            creation_time = datetime.strptime("/".join(creation_time),
-                                              "%Y/%m/%d/%H/%M/%S")
-            # Convert to IST
-            creation_time += timedelta(hours=5, minutes=30)
-            return str(creation_time)
+            created = account_creation.get("created")
+            if created is None:
+                # accountquery returns {"error": "account not found"}
+                # for unsupported id formats; treat as unknown age.
+                return None
+            try:
+                if isinstance(created, list) and len(created) >= 6:
+                    creation_time = datetime(*[int(v) for v in created[:6]])
+                elif isinstance(created, str):
+                    creation_time = datetime.strptime(
+                        created, "%Y-%m-%d %H:%M:%S")
+                else:
+                    return None
+            except Exception:
+                return None
+            return creation_time.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def get_device_accounts(pb_id):
@@ -408,7 +417,14 @@ def kick_by_pb_id(pb_id, msg):
 
 
 def get_account_age(ct):
-    creation_time = datetime.strptime(ct, "%Y-%m-%d %H:%M:%S")
+    # If age cannot be resolved for this account id format, fail open
+    # so players are not incorrectly treated as brand-new accounts.
+    if not ct:
+        return float("inf")
+    try:
+        creation_time = datetime.strptime(str(ct), "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return float("inf")
     now = datetime.now()
     delta = now - creation_time
     delta_hours = delta.total_seconds() / (60 * 60)
