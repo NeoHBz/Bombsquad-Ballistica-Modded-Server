@@ -3,8 +3,8 @@
   "ChatCommands": {
     "BrodcastCommand": true
   },
-  "HostDeviceName": "v1.4",
-  "HostName": "BCSv2",
+  "HostDeviceName": "neovps",
+  "HostName": "oracle",
   "KickVoteMsgType": "chat",
   "ScoreScreenAnnouncement": {
     "enable": true,
@@ -125,7 +125,7 @@
   "enablerank": true,
   "enablestats": true,
   "enabletags": true,
-  "firstTimeJoinMsg": "Welcome to the server,we r saving all your account details and chats",
+  "firstTimeJoinMsg": "Welcome to the server",
   "leaderboard": {
     "barsBehindName": true,
     "enable": true
@@ -159,7 +159,7 @@
   "sameCharacterForTeam": false,
   "statsResetAfterDays": 31,
   "textonmap": {
-    "bottom left watermark": "Owner : <owner-name> \nEditor : <bablu>\nScripts : BCS1.7.51",
+    "bottom left watermark": "",
     "center highlights": {
       "color": [
         1,
@@ -169,18 +169,17 @@
       "msg": [
         "type end to start end vote",
         "start msg with prefix .(dot) to send in game popup msg",
-        "start msg with prefix ,(comma) to send msg to teammates",
-        "BombSquad Community Server - BCS"
+        "start msg with prefix ,(comma) to send msg to teammates"
       ],
       "randomColor": true
     },
-    "top watermark": "Welcome to server \nIP @IP PORT @PORT"
+    "top watermark": ""
   },
-  "useV2Account": false,
+  "useV2Account": true,
   "warnMsg": "WARNING !!!",
   "whitelist": false,
   "mfa" : {
-    "enable": true,
+    "enable": false,
     "enforce_for_all_players": false,
     "enforce_for_accounts": [ "HeySmoothy", "test" ]
   }
