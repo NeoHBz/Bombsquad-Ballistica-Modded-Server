@@ -358,13 +358,24 @@ ServerController.shutdown = shutdown(ServerController.shutdown)
 def on_player_request(func) -> bool:
     def wrapper(*args, **kwargs):
         player = args[1]
+        player_account_id = (
+            player.get_account_id()
+            if hasattr(player, "get_account_id")
+            else player.get_v1_account_id()
+        )
         count = 0
-        if not (player.get_v1_account_id(
-        ) in serverdata.clients and
-                serverdata.clients[player.get_v1_account_id()]["verified"]):
+        if not (
+            player_account_id in serverdata.clients
+            and serverdata.clients[player_account_id]["verified"]
+        ):
             return False
         for current_player in args[0].sessionplayers:
-            if current_player.get_v1_account_id() == player.get_v1_account_id():
+            current_account_id = (
+                current_player.get_account_id()
+                if hasattr(current_player, "get_account_id")
+                else current_player.get_v1_account_id()
+            )
+            if current_account_id == player_account_id:
                 count += 1
         if count >= settings["maxPlayersPerDevice"]:
             bs.broadcastmessage("Reached max players limit per device",
