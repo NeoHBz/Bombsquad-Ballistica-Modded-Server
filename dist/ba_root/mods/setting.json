@@ -175,7 +175,7 @@
     },
     "top watermark": ""
   },
-  "useV2Account": true,
+  "useV2Account": false,
   "warnMsg": "WARNING !!!",
   "whitelist": false,
   "mfa" : {
