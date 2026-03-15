@@ -12,3 +12,9 @@ services:
     logging:
       options:
         max-size: "1g"
+    networks:
+      - nginx_proxy_shared
+
+networks:
+  nginx_proxy_shared:
+    external: true
