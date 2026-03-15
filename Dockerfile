@@ -17,10 +17,13 @@ COPY . .
 RUN rm -rf dist/dummymodules
 
 # 2. Install mod dependencies (pure-Python or aarch64 wheels)
-RUN python3.13 -m ensurepip --upgrade && \
-    python3.13 -m pip install --no-cache-dir \
+RUN python3.13 -m venv /opt/venv && \
+    /opt/venv/bin/pip install --no-cache-dir --upgrade pip && \
+    /opt/venv/bin/pip install --no-cache-dir \
       aiohttp discord.py flask requests cryptography pywebpush pyyaml \
       waitress ecdsa
+
+ENV PATH="/opt/venv/bin:${PATH}"
 
 # 3. Fix permissions
 RUN chmod +x bombsquad_server && \
@@ -29,4 +32,4 @@ RUN chmod +x bombsquad_server && \
 EXPOSE 43210/udp
 
 # 4. Launch using the server manager (shebang uses python3.13).
-CMD ["./bombsquad_server"]
+CMD ["python3.13", "./bombsquad_server"]
