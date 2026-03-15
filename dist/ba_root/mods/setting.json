@@ -130,9 +130,9 @@
     "barsBehindName": true,
     "enable": true
   },
-  "maxAccountPerIP": 3,
-  "maxPlayersPerDevice": 2,
-  "maxWarnCount": 2,
+  "maxAccountPerIP": 30,
+  "maxPlayersPerDevice": 20,
+  "maxWarnCount": 10,
   "mikirogQuickTurn": {
     "enable": false
   },
