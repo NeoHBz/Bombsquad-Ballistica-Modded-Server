@@ -819,6 +819,11 @@ class ServerManagerApp:
             del bincfg['Custom Team Colors']
 
         bincfg['Idle Exit Minutes'] = self._config.idle_exit_minutes
+
+        # 1.7.61+ uses a native REPL by default, but this wrapper depends
+        # on feeding plain Python commands via stdin. Keep legacy mode on.
+        bincfg['Use Native Python REPL'] = False
+
         with open(cfgpath, 'w', encoding='utf-8') as outfile:
             outfile.write(json.dumps(bincfg))
 
