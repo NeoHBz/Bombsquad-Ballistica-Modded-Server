@@ -2,6 +2,7 @@ services:
   bombsquad:
     container_name: bombsquad_server
     build: .
+    image: bombsquad_ballistica_server
     ports:
       - "43210:43210/udp"
     volumes:
