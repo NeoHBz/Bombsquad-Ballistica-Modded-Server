@@ -21,7 +21,7 @@ RUN python3.13 -m venv /opt/venv && \
     /opt/venv/bin/pip install --no-cache-dir --upgrade pip && \
     /opt/venv/bin/pip install --no-cache-dir \
       aiohttp discord.py flask requests cryptography pywebpush pyyaml \
-      waitress ecdsa
+    waitress ecdsa filelock psutil
 
 ENV PATH="/opt/venv/bin:${PATH}"
 
