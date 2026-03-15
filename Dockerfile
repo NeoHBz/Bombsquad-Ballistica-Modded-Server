@@ -12,6 +12,8 @@ WORKDIR /app
 
 COPY dist block_banned_ips.py bombsquad_server config.json nbstreamreader.py .
 
+RUN chmod +x bombsquad_server
+
 EXPOSE 43210/udp
 
 CMD ["./bombsquad_server"]
